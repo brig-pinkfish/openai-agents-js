@@ -258,9 +258,11 @@ function createOrchestrationAgent(selectedTools: string[], extractedInputs: Reco
     'SEQUENTIAL TOOLS: When one tool needs output from another (e.g., write_poem then format_response)',
     'PARALLEL TOOLS: When tools are independent and can run simultaneously (e.g., write_blog_title and write_audio_jingle)',
     'CRITICAL: For sequential tools, provide ALL inputs for ALL tools. For format_response, set content:"<from_previous_tool>" as a placeholder.',
+    'INPUT VALIDATION: If required parameters are missing from user request AND not in pre-extracted inputs, add them to missing_inputs array. NEVER use default/generic values.',
+    'REQUIRED PARAMETERS: write_poem(theme), write_blog_title(theme), write_audio_jingle(word_count, theme), write_lego_concept(theme), format_response(content)',
     'Respond with JSON: {"tasks": {"completed": [], "pending": [], "current_batch": []}, "tools": {"sequential_groups": [[tool1], [tool2]], "parallel_group": [tool3, tool4], "inputs": {"tool1": {"param": "value"}, "tool2": {"param": "value"}}, "reasoning": "why"}, "status": {"complete": false, "continue": true, "missing_inputs": [], "execution_mode": "sequential|parallel"}}',
     'Mark tasks as completed ONLY after action agent confirms execution. Never mark tasks complete until they are actually executed.',
-    'ENSURE all tools in sequential_groups and parallel_group have corresponding entries in inputs object with all required parameters.'
+    'ONLY provide tool inputs if ALL required parameters are available. If ANY required parameter is missing, add to missing_inputs instead.'
   ].join(' ');
 
   return new Agent({
