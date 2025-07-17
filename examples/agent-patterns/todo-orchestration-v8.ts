@@ -122,8 +122,63 @@ ${content}
   }
 });
 
+const generalResponse = tool({
+  name: 'general_response',
+  description: 'Provides helpful responses to greetings, questions, and general interactions that don\'t require creative content generation',
+  parameters: z.object({
+    user_message: z.string().describe('The user\'s message or question'),
+    response_type: z.string().describe('Type of response needed: greeting, explanation, help, or general')
+  }),
+  needsApproval: false, // Never needs approval for general responses
+  async execute({ user_message, response_type }) {
+    const responses = {
+      greeting: "Hello! I'm a creative writing orchestration system that can help you generate poems, blog titles, jingles, LEGO concepts, and format content. What would you like me to create for you today?",
+      
+      explanation: `This is a TODO Orchestration Pattern system that intelligently selects and coordinates creative writing tools. 
+
+🛠️ Available Tools:
+• write_poem - Create beautiful poetry
+• write_blog_title - Generate compelling blog titles  
+• write_audio_jingle - Write catchy advertising jingles
+• write_lego_concept - Design detailed LEGO kit concepts
+• format_response - Format content in clean markdown
+
+🎯 How it works:
+1. I analyze your request and select relevant tools
+2. I coordinate the execution (sequential for chained tasks, parallel for independent tasks)
+3. I deliver the creative results
+
+Try saying things like:
+• "Write a poem about winter and format it"
+• "Create a blog title and jingle for my coffee shop"
+• "Design a space-themed LEGO set"`,
+
+      help: `I can help you create various types of content! Here are some examples:
+
+📝 Single tasks:
+• "Write a poem about nature"
+• "Create a blog title about productivity"
+• "Design a LEGO castle set"
+
+🔗 Sequential workflows:
+• "Write a poem about winter and format it nicely"
+• "Create a blog title about travel and format it"
+
+⚡ Parallel tasks:
+• "Write a jingle and blog title for my bakery"
+• "Create a poem and LEGO concept about space"
+
+Just tell me what you'd like to create!`,
+      
+      general: `I'm here to help with creative writing tasks. I can generate poems, blog titles, jingles, LEGO concepts, and format content. What would you like me to create?`
+    };
+    
+    return responses[response_type as keyof typeof responses] || responses.general;
+  }
+});
+
 // ===== ALL AVAILABLE TOOLS =====
-const ALL_TOOLS = [writePoem, writeBlogTitle, writeAudioJingle, writeLegoeConcept, formatResponse];
+const ALL_TOOLS = [writePoem, writeBlogTitle, writeAudioJingle, writeLegoeConcept, formatResponse, generalResponse];
 const TOOL_MAP = new Map(ALL_TOOLS.map(tool => [tool.name, tool]));
 
 // ===== PROGRAMMATIC TOOL SELECTION =====
@@ -156,13 +211,24 @@ SMART PATTERN RECOGNITION:
 🎯 "write X and Y" = usually parallel unless Y depends on X
 🎯 "create X then Y" = sequential (Y uses X output)
 🎯 "X and formatted Y" = X in parallel with (create Y + format Y)
+🎯 Greetings/questions = general_response only (NO creative tools)
 
 SEMANTIC EXAMPLES:
+Creative Content:
 - "formatted poem" → write_poem + format_response (sequential)
 - "formatted blog title" → write_blog_title + format_response (sequential)  
 - "poem and jingle" → write_poem + write_audio_jingle (parallel)
 - "poem about X and format it" → write_poem + format_response (sequential)
 - "lego concept and formatted poem" → write_lego_concept + (write_poem→format_response) (mixed: parallel lego + sequential poem formatting)
+
+General Interactions:
+- "hello" → general_response (greeting)
+- "hi there" → general_response (greeting)
+- "what can you do?" → general_response (explanation)
+- "how does this work?" → general_response (explanation)
+- "help" → general_response (help)
+- "what is this system?" → general_response (explanation)
+- "thanks" → general_response (general)
 
 Determine:
 1. Which tools are needed to fulfill the request
@@ -240,7 +306,8 @@ function createOrchestrationAgent(selectedTools: string[], extractedInputs: Reco
                      tool.name === 'write_blog_title' ? '(needs theme)' :
                      tool.name === 'write_audio_jingle' ? '(needs word_count, theme)' :
                      tool.name === 'write_lego_concept' ? '(needs theme)' :
-                     tool.name === 'format_response' ? '(needs content)' : '';
+                     tool.name === 'format_response' ? '(needs content)' :
+                     tool.name === 'general_response' ? '(needs user_message, response_type)' : '';
     
     return `${tool.name} ${paramInfo}`;
   }).join(', ');
@@ -251,15 +318,18 @@ function createOrchestrationAgent(selectedTools: string[], extractedInputs: Reco
     : 'No inputs pre-extracted from user request';
 
   const instructions = [
-    'You are a creative writing orchestration agent with TODO list management and parallel execution capability.',
+    'You are an orchestration agent with TODO list management and parallel execution capability.',
     `SELECTED TOOLS FOR THIS REQUEST: ${toolDescriptions}.`,
     `${inputsSummary}.`,
     'IMPORTANT: You ONLY plan and coordinate. You do NOT execute tools yourself.',
+    'EXECUTE ALL SELECTED TOOLS: Whether creative tools OR general_response, all selected tools must be executed by the action agent.',
     'SEQUENTIAL TOOLS: When one tool needs output from another (e.g., write_poem then format_response)',
     'PARALLEL TOOLS: When tools are independent and can run simultaneously (e.g., write_blog_title and write_audio_jingle)',
+    'GENERAL RESPONSES: When general_response is selected, execute it like any other tool with proper inputs.',
     'CRITICAL: For sequential tools, provide ALL inputs for ALL tools. For format_response, set content:"<from_previous_tool>" as a placeholder.',
     'INPUT VALIDATION: If required parameters are missing from user request AND not in pre-extracted inputs, add them to missing_inputs array. NEVER use default/generic values.',
-    'REQUIRED PARAMETERS: write_poem(theme), write_blog_title(theme), write_audio_jingle(word_count, theme), write_lego_concept(theme), format_response(content)',
+    'REQUIRED PARAMETERS: write_poem(theme), write_blog_title(theme), write_audio_jingle(word_count, theme), write_lego_concept(theme), format_response(content), general_response(user_message, response_type)',
+    'FOR GENERAL_RESPONSE: Extract user_message from user request, determine response_type (greeting/explanation/help/general) based on request intent.',
     'Respond with JSON: {"tasks": {"completed": [], "pending": [], "current_batch": []}, "tools": {"sequential_groups": [[tool1], [tool2]], "parallel_group": [tool3, tool4], "inputs": {"tool1": {"param": "value"}, "tool2": {"param": "value"}}, "reasoning": "why"}, "status": {"complete": false, "continue": true, "missing_inputs": [], "execution_mode": "sequential|parallel"}}',
     'Mark tasks as completed ONLY after action agent confirms execution. Never mark tasks complete until they are actually executed.',
     'ONLY provide tool inputs if ALL required parameters are available. If ANY required parameter is missing, add to missing_inputs instead.'
@@ -317,16 +387,22 @@ interface OrchestrationResponse {
 // ===== HELPER FUNCTIONS (Same as v6) =====
 function getToolDescriptions(): string {
   return `
-Available Creative Tools:
+Available Tools:
 • write_poem - Create beautiful poetry (needs: theme)
 • write_blog_title - Generate compelling blog titles (needs: theme)  
 • write_audio_jingle - Write catchy jingles (needs: word_count, theme)
 • write_lego_concept - Design LEGO kit concepts (needs: theme)
 • format_response - Format content in markdown (needs: content)
+• general_response - Handle greetings, questions, and explanations (needs: user_message, response_type)
 
 Multi-tool examples:
 • "Write a poem about nature and format it" (SEQUENTIAL - format needs poem)
-• "Create a blog title and jingle for my coffee shop" (PARALLEL - independent tasks)`;
+• "Create a blog title and jingle for my coffee shop" (PARALLEL - independent tasks)
+
+General interactions:
+• "Hello" or "Hi" - Get a friendly greeting
+• "What can you do?" - Learn about available tools
+• "Help" - See usage examples`;
 }
 
 function logSection(title: string, content?: string) {
