@@ -19,6 +19,20 @@
     "start:parallelization": "tsx parallelization.ts",
     "start:routing": "tsx routing.ts",
     "start:streamed": "tsx streamed.ts",
-    "start:streaming-guardrails": "tsx streaming-guardrails.ts"
+    "start:streaming-guardrails": "tsx streaming-guardrails.ts",
+    "start:todo-orchestration": "tsx todo-orchestration.ts",
+    "start:todo-orchestration-v2": "tsx todo-orchestration-v2.ts",
+    "start:todo-orchestration-v3": "tsx todo-orchestration-v3.ts",
+    "start:todo-orchestration-v5": "tsx todo-orchestration-v5.ts",
+    "start:todo-orchestration-v5:auto": "tsx todo-orchestration-v5.ts",
+    "start:todo-orchestration-v5:approval": "APPROVAL_ENABLED=true tsx todo-orchestration-v5.ts",
+    "start:todo-orchestration-v6": "tsx todo-orchestration-v6.ts",
+    "start:todo-orchestration-v6:auto": "tsx todo-orchestration-v6.ts",
+    "start:todo-orchestration-v6:approval": "APPROVAL_ENABLED=true tsx todo-orchestration-v6.ts",
+    "start:todo-orchestration-v7": "tsx todo-orchestration-v7.ts",
+    "start:todo-orchestration-v7:auto": "tsx todo-orchestration-v7.ts",
+    "start:todo-orchestration-v7:approval": "APPROVAL_ENABLED=true tsx todo-orchestration-v7.ts",
+    "start:todo-orchestration-v8:auto": "tsx todo-orchestration-v8.ts",
+    "start:todo-orchestration-v8:approval": "APPROVAL_ENABLED=true tsx todo-orchestration-v8.ts"
   }
 }
